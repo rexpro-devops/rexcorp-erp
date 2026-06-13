@@ -863,8 +863,8 @@ const ComplianceView: React.FC<ComplianceViewProps> = ({
                     onClick={() => setActiveSubView('trade-licenses')}
                     className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm transition-all hover:border-blue-500 hover:shadow dark:border-gray-700 dark:bg-gray-800"
                 >
-                    <div className="rounded-lg bg-blue-50 p-2.5 dark:bg-blue-950/40">
-                        <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <div className="flex-shrink-0">
+                        <ShieldCheck className="h-6 w-6 text-gray-500 dark:text-gray-400" />
                     </div>
                     <h3 className="mt-4 text-base font-semibold text-gray-905 dark:text-gray-100 font-mono">Trade Licenses</h3>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-normal">
@@ -879,8 +879,8 @@ const ComplianceView: React.FC<ComplianceViewProps> = ({
                     onClick={() => setActiveSubView('duty-tariffs')}
                     className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm transition-all hover:border-blue-500 hover:shadow dark:border-gray-700 dark:bg-gray-800"
                 >
-                    <div className="rounded-lg bg-amber-50 p-2.5 dark:bg-amber-950/40">
-                        <Calculator className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                    <div className="flex-shrink-0">
+                        <Calculator className="h-6 w-6 text-gray-500 dark:text-gray-400" />
                     </div>
                     <h3 className="mt-4 text-base font-semibold text-gray-900 dark:text-gray-100 font-mono">Duty Tariffs</h3>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-normal">
