@@ -1,21 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-    ChevronDownIcon,
-    ListIcon,
-    RefreshIcon,
-    DotsHorizontalIcon,
-    FilterIcon,
-    XIcon,
-    ArrowUpDownIcon,
     ChevronDoubleLeftIcon,
     ChevronDoubleRightIcon,
     AlignLeftIcon,
     AlignRightIcon,
+    RefreshIcon,
+    DotsHorizontalIcon,
 } from '../constants';
 import type { Invoice } from '../types';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ViewModeSelector, type ViewMode } from './ViewModeSelector';
+import { FilterPanel } from './FilterPanel';
+import { ReportView, type ColumnDef } from './ReportView';
+import { ListView, type ListItemFieldDef } from './ListView';
+import { KanbanView, type KanbanColumn } from './KanbanView';
+import { StatusBadge } from './StatusBadge';
+import { useFilters, type FilterState } from '../hooks/useFilters';
 
 interface ClientInvoicingListViewProps {
     invoices: Invoice[];
@@ -24,145 +26,281 @@ interface ClientInvoicingListViewProps {
 }
 
 const ClientInvoicingListView: React.FC<ClientInvoicingListViewProps> = ({ invoices, onInvoiceSelect, onNewInvoice }) => {
+    const [viewMode, setViewMode] = useState<ViewMode>('report');
     const [isSubPanelOpen, setIsSubPanelOpen] = useState(true);
     const [isHovered, setIsHovered] = useState(false);
-    const [customerFilter, setCustomerFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
 
-    const getStatusBadge = (status: Invoice['status']) => {
-        const baseClasses = "text-xs font-medium me-2 px-2.5 py-0.5 rounded-full";
-        switch (status) {
-            case 'Paid': return <span className={`bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 ${baseClasses}`}>{status}</span>;
-            case 'Unpaid': return <span className={`bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 ${baseClasses}`}>{status}</span>;
-            case 'Overdue': return <span className={`bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 ${baseClasses}`}>{status}</span>;
-            case 'Draft': return <span className={`bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 ${baseClasses}`}>{status}</span>;
-            default: return null;
-        }
+    // Extract unique statuses and customers for filter options
+    const statusOptions = useMemo(
+        () => Array.from(new Set(invoices.map((inv) => inv.status)))
+            .map((status) => ({ id: status, label: status, checked: false })),
+        [invoices]
+    );
+
+    const customerOptions = useMemo(
+        () => Array.from(new Set(invoices.map((inv) => inv.billedToName)))
+            .slice(0, 5) // Limit to 5 for demo
+            .map((name) => ({ id: name, label: name, checked: false })),
+        [invoices]
+    );
+
+    const initialFilters: FilterState = {
+        status: {
+            id: 'status',
+            label: 'Status',
+            type: 'checkbox',
+            options: statusOptions,
+        },
+        customer: {
+            id: 'billedToName',
+            label: 'Customer',
+            type: 'checkbox',
+            options: customerOptions,
+        },
     };
+
+    // Custom filter function
+    const filterFn = (item: Invoice, filters: FilterState) => {
+        const statusFilter = filters.status?.options.filter((opt) => opt.checked);
+        const customerFilter = filters.customer?.options.filter((opt) => opt.checked);
+
+        if (statusFilter && statusFilter.length > 0) {
+            if (!statusFilter.some((opt) => opt.id === item.status)) {
+                return false;
+            }
+        }
+
+        if (customerFilter && customerFilter.length > 0) {
+            if (!customerFilter.some((opt) => opt.id === item.billedToName)) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    const {
+        filters,
+        toggleFilter,
+        setFilterValue,
+        clearAllFilters,
+        clearFilter,
+        filteredData,
+        activeFilterCount,
+    } = useFilters(invoices, initialFilters, filterFn);
     
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     };
 
+    // Report view columns
+    const reportColumns: ColumnDef<Invoice>[] = [
+        {
+            id: 'invoiceNumber',
+            header: 'Invoice #',
+            accessorKey: 'invoiceNumber',
+            sortable: true,
+            width: 'w-28',
+            render: (item) => (
+                <button
+                    onClick={() => onInvoiceSelect(item.id)}
+                    className="text-blue-600 hover:underline dark:text-blue-400 font-medium"
+                >
+                    {item.invoiceNumber}
+                </button>
+            ),
+        },
+        {
+            id: 'billedToName',
+            header: 'Billed To',
+            accessorKey: 'billedToName',
+            sortable: true,
+        },
+        {
+            id: 'status',
+            header: 'Status',
+            render: (item) => (
+                <StatusBadge status={item.status as any} size="sm" />
+            ),
+        },
+        {
+            id: 'invoiceDate',
+            header: 'Date',
+            accessorKey: 'invoiceDate',
+            sortable: true,
+        },
+        {
+            id: 'totalAmount',
+            header: 'Total',
+            render: (item) => (
+                <span className="font-medium">{formatCurrency(item.totalAmount)}</span>
+            ),
+        },
+    ];
+
+    // List view fields
+    const listFields: ListItemFieldDef<Invoice>[] = [
+        {
+            id: 'invoiceNumber',
+            accessorKey: 'invoiceNumber',
+            render: (item) => (
+                <button
+                    onClick={() => onInvoiceSelect(item.id)}
+                    className="text-blue-600 hover:underline dark:text-blue-400 font-semibold"
+                >
+                    {item.invoiceNumber}
+                </button>
+            ),
+        },
+        {
+            id: 'billedToName',
+            label: 'Billed To',
+            accessorKey: 'billedToName',
+        },
+        {
+            id: 'invoiceDate',
+            label: 'Date',
+            accessorKey: 'invoiceDate',
+        },
+    ];
+
+    // Kanban columns
+    const kanbanColumns: KanbanColumn[] = [
+        { id: 'Draft', title: 'Draft', color: 'bg-gray-50 dark:bg-gray-800' },
+        { id: 'Unpaid', title: 'Unpaid', color: 'bg-orange-50 dark:bg-orange-900/20' },
+        { id: 'Paid', title: 'Paid', color: 'bg-green-50 dark:bg-green-900/20' },
+        { id: 'Overdue', title: 'Overdue', color: 'bg-red-50 dark:bg-red-900/20' },
+    ];
+
     return (
-        <div className="flex h-full flex-col">
-            <div className="flex flex-1 overflow-hidden">
-                {/* Filter Sidebar */}
-                <aside className={`w-64 flex-shrink-0 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 ${!isSubPanelOpen ? 'hidden' : 'mr-6'}`}>
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">Filter By</h3>
-                        <div className="space-y-2">
-                            <label htmlFor="customer-name" className="sr-only">Customer Name</label>
-                            <Select value={customerFilter} onValueChange={val => setCustomerFilter(val)} disabled>
-                                <SelectTrigger className="w-full p-2">
-                                    <SelectValue placeholder="Customer Name" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="placeholder" disabled>No items</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <label htmlFor="status" className="sr-only">Status</label>
-                            <Select value={statusFilter} onValueChange={val => setStatusFilter(val)} disabled>
-                                <SelectTrigger className="w-full p-2">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="placeholder" disabled>No items</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <button className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">Edit Filters</button>
-                        <div className="space-y-2 border-t pt-4 dark:border-gray-600">
-                            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">Save Filter</h3>
-                            <label htmlFor="filter-name" className="sr-only">Filter Name</label>
-                            <input type="text" id="filter-name" placeholder="Filter Name" className="w-full rounded-md border-gray-300 bg-gray-100 p-2 text-sm placeholder-gray-500 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
-                        </div>
-                    </div>
-                </aside>
+        <div className="flex h-full flex-col space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-4">
+                <div className="flex items-center space-x-2">
+                    <button
+                        className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                        onClick={() => setIsSubPanelOpen(!isSubPanelOpen)}
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
+                    >
+                        {isHovered ? (
+                            isSubPanelOpen ? (
+                                <ChevronDoubleLeftIcon className="h-5 w-5" />
+                            ) : (
+                                <ChevronDoubleRightIcon className="h-5 w-5" />
+                            )
+                        ) : isSubPanelOpen ? (
+                            <AlignLeftIcon className="h-5 w-5" />
+                        ) : (
+                            <AlignRightIcon className="h-5 w-5" />
+                        )}
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Client Invoices</h1>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <ViewModeSelector currentView={viewMode} onViewChange={setViewMode} />
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                        <RefreshIcon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                        <DotsHorizontalIcon className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={onNewInvoice} className="bg-black hover:bg-gray-800 dark:bg-blue-600 dark:hover:bg-blue-700">
+                        + New Invoice
+                    </Button>
+                </div>
+            </div>
 
-                {/* Main Content */}
-                <div className="flex-1 rounded-lg border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 flex flex-col">
-                    {/* Header Actions */}
-                    <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 p-4">
-                        <div className="flex items-center space-x-2">
-                            <button
-                                className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-                                onClick={() => setIsSubPanelOpen(!isSubPanelOpen)}
-                                onMouseEnter={() => setIsHovered(true)}
-                                onMouseLeave={() => setIsHovered(false)}
-                            >
-                                {isHovered ? (
-                                    isSubPanelOpen ? (
-                                        <ChevronDoubleLeftIcon className="h-5 w-5" />
-                                    ) : (
-                                        <ChevronDoubleRightIcon className="h-5 w-5" />
-                                    )
-                                ) : isSubPanelOpen ? (
-                                    <AlignLeftIcon className="h-5 w-5" />
-                                ) : (
-                                    <AlignRightIcon className="h-5 w-5" />
-                                )}
-                            </button>
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Client Invoices</h1>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <button className="flex items-center space-x-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                <ListIcon className="h-4 w-4" /><span>List View</span><ChevronDownIcon className="h-4 w-4" />
-                            </button>
-                            <button className="rounded-md p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"><RefreshIcon className="h-4 w-4" /></button>
-                            <button className="rounded-md p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"><DotsHorizontalIcon className="h-4 w-4" /></button>
-                            <button onClick={onNewInvoice} className="rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-blue-600 dark:hover:bg-blue-700">+ New Invoice</button>
-                        </div>
-                    </div>
-                    
-                    {/* Table Actions */}
-                    <div className="flex items-center justify-between p-4">
-                        <div className="flex items-center space-x-2">
-                            <button className="flex items-center space-x-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                <FilterIcon className="h-4 w-4" /><span>Filter</span>
-                            </button>
-                            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-md dark:text-gray-400 dark:hover:bg-gray-700"><XIcon className="h-4 w-4" /></button>
-                            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-md dark:text-gray-400 dark:hover:bg-gray-700"><ArrowUpDownIcon className="h-4 w-4" /></button>
-                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Invoice Date</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                            <span>{invoices.length} of {invoices.length}</span>
-                        </div>
-                    </div>
+            {/* Filter Panel */}
+            <FilterPanel
+                filters={filters}
+                onToggleFilter={toggleFilter}
+                onSetFilterValue={setFilterValue}
+                onClearAllFilters={clearAllFilters}
+                onClearFilter={clearFilter}
+                activeFilterCount={activeFilterCount}
+            />
 
-                    {/* Invoices Table */}
-                    <div className="overflow-y-auto custom-scrollbar">
-                        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                            <thead className="bg-gray-50 text-xs uppercase text-gray-700 sticky top-0 dark:bg-gray-700/50 dark:text-gray-300">
-                                <tr>
-                                    <th scope="col" className="p-4"><Checkbox className="rounded border-gray-300 dark:bg-gray-900 dark:border-gray-600" /></th>
-                                    <th scope="col" className="px-6 py-3 font-semibold">Invoice #</th>
-                                    <th scope="col" className="px-6 py-3 font-semibold">Billed To</th>
-                                    <th scope="col" className="px-6 py-3 font-semibold">Status</th>
-                                    <th scope="col" className="px-6 py-3 font-semibold">Date</th>
-                                    <th scope="col" className="px-6 py-3 font-semibold text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {invoices.map(invoice => (
-                                    <tr key={invoice.id} className="bg-white border-b hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700/50">
-                                        <td className="w-4 p-4"><Checkbox className="rounded border-gray-300 dark:bg-gray-900 dark:border-gray-600"/></td>
-                                        <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap dark:text-white">
-                                            <button onClick={() => onInvoiceSelect(invoice.id)} className="text-blue-600 hover:underline dark:text-blue-400">
-                                                {invoice.invoiceNumber}
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-4">{invoice.billedToName}</td>
-                                        <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
-                                        <td className="px-6 py-4">{invoice.invoiceDate}</td>
-                                        <td className="px-6 py-4 font-medium text-gray-900 text-right dark:text-white">{formatCurrency(invoice.totalAmount)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            {/* Main Content */}
+            <div className="flex-1 overflow-hidden rounded-lg border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 px-4 pb-4">
+                {viewMode === 'report' && (
+                    <ReportView
+                        columns={reportColumns}
+                        data={filteredData}
+                        getRowId={(row) => row.id}
+                        selectable={true}
+                        striped={true}
+                    />
+                )}
+
+                {viewMode === 'list' && (
+                    <div className="overflow-y-auto h-full pt-4">
+                        <ListView
+                            items={filteredData}
+                            fields={listFields}
+                            getItemId={(item) => item.id}
+                            selectable={true}
+                            renderCard={(item) => (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                                            {item.billedToName}
+                                        </h4>
+                                        <StatusBadge status={item.status as any} size="sm" />
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {item.invoiceNumber}
+                                    </p>
+                                    <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
+                                        <span className="text-xs text-gray-500">{item.invoiceDate}</span>
+                                        <span className="font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrency(item.totalAmount)}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            onItemClick={(item) => onInvoiceSelect(item.id)}
+                        />
                     </div>
+                )}
+
+                {viewMode === 'kanban' && (
+                    <div className="overflow-x-auto h-full pt-4">
+                        <KanbanView
+                            items={filteredData}
+                            columns={kanbanColumns}
+                            getItemColumn={(item) => item.status}
+                            getItemId={(item) => item.id}
+                            renderCard={(item) => (
+                                <div className="space-y-1">
+                                    <h4 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                                        {item.billedToName}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {item.invoiceNumber}
+                                    </p>
+                                    <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                                        <span className="text-xs font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrency(item.totalAmount)}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            onCardClick={(item) => onInvoiceSelect(item.id)}
+                        />
+                    </div>
+                )}
+
+                {/* Results Info */}
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <span>
+                        Showing {filteredData.length} of {invoices.length} invoices
+                    </span>
+                    {activeFilterCount > 0 && (
+                        <span>
+                            {activeFilterCount} active filter{activeFilterCount !== 1 ? 's' : ''}
+                        </span>
+                    )}
                 </div>
             </div>
         </div>
