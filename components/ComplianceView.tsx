@@ -847,8 +847,8 @@ const ComplianceView: React.FC<ComplianceViewProps> = ({
                     onClick={() => setActiveSubView('customs-declarations')}
                     className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm transition-all hover:border-blue-500 hover:shadow dark:border-gray-700 dark:bg-gray-800"
                 >
-                    <div className="rounded-lg bg-indigo-50 p-2.5 dark:bg-indigo-950/40">
-                        <Landmark className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                    <div className="flex-shrink-0">
+                        <Landmark className="h-6 w-6 text-gray-500 dark:text-gray-400" />
                     </div>
                     <h3 className="mt-4 text-base font-semibold text-gray-900 dark:text-gray-100 font-mono">Customs Declarations</h3>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-normal">
