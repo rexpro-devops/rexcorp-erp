@@ -845,48 +845,48 @@ const ComplianceView: React.FC<ComplianceViewProps> = ({
             <div className="grid gap-6 md:grid-cols-3">
                 <button 
                     onClick={() => setActiveSubView('customs-declarations')}
-                    className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm transition-all hover:border-blue-500 hover:shadow dark:border-gray-700 dark:bg-gray-800"
+                    className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm hover:shadow-md transition-all hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500"
                 >
-                    <div className="flex-shrink-0">
-                        <Landmark className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                    <div className="rounded-lg bg-gray-100 p-2.5 dark:bg-gray-700">
+                        <Landmark className="h-6 w-6 text-gray-700 dark:text-gray-300" />
                     </div>
-                    <h3 className="mt-4 text-base font-semibold text-gray-900 dark:text-gray-100 font-mono">Customs Declarations</h3>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-normal">
+                    <h3 className="mt-4 text-base font-semibold text-gray-950 dark:text-white">Customs Declarations</h3>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 leading-normal">
                         Draft officially declared PIB/PEB documentation, and monitor Customs flow status through green/yellow/red lanes.
                     </p>
-                    <span className="mt-4 inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400">
+                    <span className="mt-4 inline-flex items-center text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
                         Open Declarations &rarr;
                     </span>
                 </button>
 
                 <button 
                     onClick={() => setActiveSubView('trade-licenses')}
-                    className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm transition-all hover:border-blue-500 hover:shadow dark:border-gray-700 dark:bg-gray-800"
+                    className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm hover:shadow-md transition-all hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500"
                 >
-                    <div className="flex-shrink-0">
-                        <ShieldCheck className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                    <div className="rounded-lg bg-gray-100 p-2.5 dark:bg-gray-700">
+                        <ShieldCheck className="h-6 w-6 text-gray-700 dark:text-gray-300" />
                     </div>
-                    <h3 className="mt-4 text-base font-semibold text-gray-905 dark:text-gray-100 font-mono">Trade Licenses</h3>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-normal">
+                    <h3 className="mt-4 text-base font-semibold text-gray-950 dark:text-white">Trade Licenses</h3>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 leading-normal">
                         Keep track of active perizinan, import quotas, and quarantine certifications with automated expiry alerts.
                     </p>
-                    <span className="mt-4 inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400">
+                    <span className="mt-4 inline-flex items-center text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
                         Manage Licenses &rarr;
                     </span>
                 </button>
 
                 <button 
                     onClick={() => setActiveSubView('duty-tariffs')}
-                    className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm transition-all hover:border-blue-500 hover:shadow dark:border-gray-700 dark:bg-gray-800"
+                    className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm hover:shadow-md transition-all hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500"
                 >
-                    <div className="flex-shrink-0">
-                        <Calculator className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                    <div className="rounded-lg bg-gray-100 p-2.5 dark:bg-gray-700">
+                        <Calculator className="h-6 w-6 text-gray-700 dark:text-gray-300" />
                     </div>
-                    <h3 className="mt-4 text-base font-semibold text-gray-900 dark:text-gray-100 font-mono">Duty Tariffs</h3>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-normal">
+                    <h3 className="mt-4 text-base font-semibold text-gray-950 dark:text-white">Duty Tariffs</h3>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 leading-normal">
                         Instantly consult HS tariffs, taxes coefficients, and restricted item import barriers (Lartas) via the simulator.
                     </p>
-                    <span className="mt-4 inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400">
+                    <span className="mt-4 inline-flex items-center text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
                         Open Lookup Simulator &rarr;
                     </span>
                 </button>
